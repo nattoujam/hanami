@@ -618,6 +618,12 @@ function escHtml(s) {
 }
 
 function parseInline(text) {
+  const store = [];
+  // インラインコード
+  text = text.replace(/`(.+?)`/g, (_, code) => {
+    store.push(`<code>${escHtml(code)}</code>`);
+    return `\x04${store.length - 1}\x05`;
+  });
   // 画像
   text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
     (_,alt,src)=>`<img src="${src}" alt="${escHtml(alt)}" loading="lazy">`);
@@ -638,7 +644,8 @@ function parseInline(text) {
   text = text.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g,'<em>$1</em>');
   // 取り消し線
   text = text.replace(/~~(.+?)~~/g,'<del>$1</del>');
-  return text;
+
+  return text.replace(/\x04(\d+)\x05/g, (_, i) => store[+i]);
 }
 
 function parseTable(rows) {
