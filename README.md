@@ -2,7 +2,7 @@
 
 Markdown・CSV ファイルをブラウザで表示するビューア。
 
-**→ [リンク](https://nattoujam.github.io/hanami/hanami.html)**
+**→ [リンク](https://nattoujam.github.io/hanami/)**
 
 ## 機能
 
@@ -16,7 +16,7 @@ Markdown・CSV ファイルをブラウザで表示するビューア。
 
 ## ローカルで使う
 
-`hanami.html` をブラウザで開くだけで動作します。
+`index.html` をブラウザで開くだけで動作します。
 
 ## ライセンス
 
