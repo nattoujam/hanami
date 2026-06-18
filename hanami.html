@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 Hanami</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='.9em' font-size='90' text-anchor='middle'>🌸</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #fdf4ff;
+  --surface: #ffffff;
+  --surface2: #fce7f3;
+  --primary: #e879a0;
+  --primary-light: #f9a8d4;
+  --secondary: #9333ea;
+  --secondary-light: #ede9fe;
+  --text: #3b0764;
+  --text-muted: #7c3aed;
+  --border: #e9d5ff;
+  --shadow: rgba(147, 51, 234, 0.12);
+  --code-bg: #f5f3ff;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, 'Yu Gothic UI',
+               'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: #f3e8ff; }
+::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+
+/* ── Header ── */
+header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: 58px;
+  background: linear-gradient(130deg, #f9a8d4 0%, #c084fc 50%, #818cf8 100%);
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 20px;
+  box-shadow: 0 4px 20px rgba(192, 132, 252, 0.35);
+}
+
+.logo {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.logo-dot {
+  width: 10px; height: 10px;
+  background: rgba(255,255,255,0.8);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.4);opacity:0.6}
+}
+
+.open-btn {
+  background: rgba(255,255,255,0.92);
+  color: var(--secondary);
+  border: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.open-btn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.16); }
+.open-btn:active { transform: translateY(0); }
+
+.refresh-btn {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.45);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.refresh-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.32);
+  border-color: rgba(255,255,255,0.8);
+  transform: translateY(-2px);
+}
+.refresh-btn:active:not(:disabled) { transform: translateY(0); }
+.refresh-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.refresh-btn.spinning .r-icon { animation: spin 0.6s linear infinite; display: inline-block; }
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  height: 100vh;
+  padding-top: 58px;
+  padding-bottom: 36px;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 2px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-head {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.sidebar-clear {
+  margin-left: auto;
+  background: none; border: none;
+  color: var(--primary); font-size: 0.68rem;
+  cursor: pointer; padding: 2px 6px;
+  border-radius: 4px; transition: background 0.15s;
+}
+.sidebar-clear:hover { background: var(--surface2); }
+
+.history-scroll { flex: 1; overflow-y: auto; padding: 8px; }
+
+.history-empty {
+  padding: 28px 12px; text-align: center;
+  color: #d8b4fe; font-size: 0.82rem; line-height: 1.8;
+}
+
+.h-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: 2px;
+  position: relative;
+}
+.h-item:hover { background: var(--secondary-light); }
+.h-item.active {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.h-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.h-info { flex: 1; min-width: 0; }
+.h-name {
+  font-size: 0.8rem; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.h-date { font-size: 0.65rem; color: #a855f7; margin-top: 1px; opacity: 0.75; }
+
+.h-del {
+  opacity: 0; background: none; border: none;
+  cursor: pointer; color: #f472b6; font-size: 0.85rem;
+  padding: 2px 5px; border-radius: 4px; transition: all 0.15s; flex-shrink: 0;
+}
+.h-item:hover .h-del { opacity: 1; }
+.h-del:hover { background: var(--surface2); }
+
+/* ── Content ── */
+.content {
+  flex: 1; overflow-y: auto; padding: 28px;
+  min-width: 0;
+}
+
+/* ── Welcome ── */
+.welcome {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: calc(100vh - 150px);
+  text-align: center; gap: 12px;
+}
+.welcome-emoji {
+  font-size: 5rem;
+  animation: floaty 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(192,132,252,0.4));
+}
+@keyframes floaty {
+  0%,100%{transform:translateY(0) rotate(-3deg)}
+  50%{transform:translateY(-14px) rotate(3deg)}
+}
+.welcome-title {
+  font-size: 1.5rem; font-weight: 800; color: var(--secondary);
+  text-shadow: 0 2px 8px rgba(147,51,234,0.15);
+}
+.welcome-sub {
+  font-size: 0.88rem; color: #a78bfa; line-height: 1.9;
+}
+.welcome-hint {
+  margin-top: 4px;
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  border: 2px dashed var(--border);
+  border-radius: 12px; padding: 14px 28px;
+  font-size: 0.82rem; color: var(--secondary);
+  line-height: 1.8;
+}
+
+/* ── File bar ── */
+.file-bar {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  margin: 0 auto 22px;
+  display: flex; align-items: center; gap: 12px;
+  max-width: 900px;
+}
+.file-bar-icon { font-size: 1.35rem; }
+.file-bar-name { font-weight: 700; color: var(--secondary); font-size: 0.9rem; }
+.file-bar-type {
+  background: var(--secondary); color: #fff;
+  font-size: 0.65rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.file-bar-size { font-size: 0.72rem; color: #a855f7; opacity: 0.8; margin-left: auto; }
+
+/* ── Markdown body ── */
+.md-body {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 40px 48px;
+  box-shadow: 0 4px 32px var(--shadow);
+  max-width: 900px; margin: 0 auto;
+  border: 2px solid var(--border);
+  line-height: 1.8;
+  font-size: 0.95rem;
+  transition: max-width 0.25s ease, border-radius 0.25s ease,
+              padding 0.25s ease, border-color 0.25s ease;
+}
+
+/* 全幅モード */
+.content.wide {
+  padding: 28px 0;
+}
+.content.wide .file-bar {
+  max-width: none;
+  border-radius: 0;
+  border: none;
+  margin-bottom: 2px;
+}
+.content.wide .md-body {
+  max-width: none;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.md-body h1,.md-body h2,.md-body h3,
+.md-body h4,.md-body h5,.md-body h6 {
+  margin: 1.5em 0 0.5em;
+  line-height: 1.3; font-weight: 800;
+}
+.md-body h1:first-child,.md-body h2:first-child { margin-top: 0; }
+
+.md-body h1 {
+  font-size: 2em; color: var(--secondary);
+  border-bottom: 3px solid var(--border); padding-bottom: 0.3em;
+}
+.md-body h2 {
+  font-size: 1.5em; color: var(--secondary);
+  border-bottom: 2px solid var(--border); padding-bottom: 0.2em;
+}
+.md-body h3 { font-size: 1.25em; color: var(--primary); }
+.md-body h4 { font-size: 1.05em; color: #7c3aed; }
+.md-body h5 { font-size: 0.95em; color: #7c3aed; }
+.md-body h6 { font-size: 0.85em; color: #a855f7; }
+
+.md-body p { margin: 0 0 1em; }
+
+.md-body a { color: #7c3aed; text-decoration-color: var(--primary-light); transition: color 0.2s; }
+.md-body a:hover { color: var(--primary); }
+
+.md-body strong { font-weight: 800; color: #6d28d9; }
+.md-body em { font-style: italic; color: var(--primary); }
+.md-body del { text-decoration: line-through; opacity: 0.55; }
+
+.md-body img {
+  max-width: 100%; border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12); margin: 6px 0;
+}
+
+.md-body hr {
+  border: none; border-top: 3px dashed #e9d5ff; margin: 2em 0;
+}
+
+.md-body blockquote {
+  border-left: 4px solid var(--primary-light);
+  margin: 1em 0; padding: 12px 20px;
+  background: #fdf4ff; border-radius: 0 10px 10px 0;
+  color: #7c3aed;
+}
+.md-body blockquote > :last-child { margin-bottom: 0; }
+
+.md-body ul, .md-body ol { margin: 0 0 1em; padding-left: 1.8em; }
+.md-body li { margin: 0.3em 0; }
+.md-body li > ul, .md-body li > ol { margin: 0.2em 0; }
+
+.md-body input[type="checkbox"] {
+  margin-right: 5px; accent-color: var(--secondary);
+  vertical-align: middle;
+}
+
+/* Code */
+.md-body code {
+  background: #f3e8ff; color: #7c3aed;
+  padding: 2px 6px; border-radius: 5px;
+  font-family: 'Cascadia Code','Fira Code','Consolas','Monaco',monospace;
+  font-size: 0.875em;
+}
+
+.code-block {
+  background: var(--code-bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden; margin: 1em 0;
+}
+.code-block-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #ede9fe, #fce7f3);
+  border-bottom: 2px solid var(--border);
+}
+.code-lang-label {
+  font-size: 0.7rem; font-weight: 800; color: var(--secondary);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.copy-btn {
+  background: white; border: 1.5px solid var(--border);
+  border-radius: 6px; padding: 3px 10px;
+  font-size: 0.68rem; cursor: pointer; color: var(--secondary);
+  transition: all 0.2s; font-weight: 600;
+}
+.copy-btn:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); }
+.copy-btn.copied { background: #10b981; color: #fff; border-color: #10b981; }
+
+.code-block pre { margin: 0; padding: 16px; overflow-x: auto; }
+.code-block code {
+  background: none; color: #4c1d95; padding: 0; border-radius: 0;
+  font-family: 'Cascadia Code','Fira Code','Consolas','Monaco',monospace;
+  font-size: 0.875rem; line-height: 1.65;
+}
+
+/* Table (in markdown) */
+.md-body .table-wrap {
+  overflow-x: auto; margin: 1em 0;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+}
+.md-body table { border-collapse: collapse; width: 100%; }
+.md-body th {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  color: var(--secondary); font-weight: 700;
+  padding: 10px 16px; text-align: left; font-size: 0.875rem;
+}
+.md-body td { padding: 8px 16px; border-top: 1px solid var(--border); font-size: 0.875rem; }
+.md-body tr:nth-child(even) td { background: #fdf4ff; }
+.md-body tr:hover td { background: #f5f3ff; }
+
+/* ── CSV viewer ── */
+.csv-wrap { max-width: 100%; }
+
+.csv-meta {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 18px;
+  margin-bottom: 14px; font-size: 0.8rem; color: var(--secondary);
+  display: flex; gap: 18px; flex-wrap: wrap;
+}
+.csv-meta span { display: flex; align-items: center; gap: 5px; }
+
+.csv-box {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 4px 28px var(--shadow);
+}
+
+.csv-toolbar {
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #fdf4ff, #fce7f3);
+  border-bottom: 2px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.csv-toolbar label { font-size: 0.8rem; color: var(--secondary); font-weight: 600; }
+.csv-search-input {
+  flex: 1; border: 2px solid var(--border);
+  border-radius: var(--radius-sm); padding: 6px 12px;
+  font-size: 0.85rem; outline: none; background: #fff;
+  color: var(--text); transition: border-color 0.2s;
+  font-family: inherit;
+}
+.csv-search-input:focus { border-color: var(--secondary); }
+.csv-count { font-size: 0.72rem; color: #a855f7; white-space: nowrap; }
+
+.csv-scroll { overflow: auto; max-height: calc(100vh - 310px); }
+
+.csv-table { border-collapse: collapse; width: 100%; }
+.csv-table th {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  color: var(--secondary); font-weight: 700;
+  padding: 10px 14px; font-size: 0.82rem;
+  position: sticky; top: 0; z-index: 10;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.csv-table td {
+  padding: 7px 14px; font-size: 0.82rem;
+  border-top: 1px solid var(--border);
+  max-width: 280px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  vertical-align: middle;
+}
+.csv-table tr:nth-child(even) td { background: #fdf4ff; }
+.csv-table tr:hover td { background: #f3e8ff; }
+.csv-row-num {
+  color: #c4b5fd; font-size: 0.7rem; user-select: none;
+  padding: 7px 10px; border-top: 1px solid var(--border);
+  position: sticky; left: 0; background: #fdf4ff;
+  text-align: right;
+}
+.csv-table tr:hover .csv-row-num { background: #f3e8ff; }
+
+.csv-table mark {
+  background: #fde68a; color: var(--text);
+  border-radius: 2px; padding: 0 1px;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--secondary); color: #fff;
+  padding: 11px 20px; border-radius: 10px;
+  font-size: 0.85rem; font-weight: 600;
+  box-shadow: 0 8px 28px rgba(147,51,234,0.35);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 1.7s forwards;
+  z-index: 500;
+}
+@keyframes toastIn { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes toastOut { from{opacity:1} to{opacity:0;pointer-events:none} }
+
+/* ── Drag overlay ── */
+.drag-over::after {
+  content: '📂 ドロップしてファイルを開く';
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(192,132,252,0.25);
+  border: 4px dashed var(--secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 800; color: var(--secondary);
+  backdrop-filter: blur(4px);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+/* ── Mermaid ── */
+.mermaid-block {
+  margin: 1em 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mermaid-block-head {
+  display: flex; align-items: center;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #ede9fe, #fce7f3);
+  border-bottom: 2px solid var(--border);
+  gap: 8px;
+}
+.mermaid-block-head .code-lang-label { flex: 1; }
+.mermaid-zoom-btns { display: flex; gap: 4px; }
+.mermaid-zoom-btns button {
+  background: white; border: 1.5px solid var(--border);
+  border-radius: 6px; width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.95rem; color: var(--secondary);
+  transition: all 0.15s; line-height: 1; padding: 0;
+}
+.mermaid-zoom-btns button:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); }
+.mermaid-zoom-scale {
+  font-size: 0.7rem; color: var(--secondary); font-weight: 700;
+  min-width: 36px; text-align: center; opacity: 0.8;
+}
+.mermaid-block .mermaid {
+  overflow: hidden; background: #fdf4ff;
+  min-height: 80px; position: relative;
+  cursor: grab; user-select: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.mermaid-block .mermaid.dragging { cursor: grabbing; }
+.mermaid-block .mermaid svg { display: block; max-width: none; transition: none; }
+.mermaid-error {
+  padding: 16px 20px;
+  background: #fff0f0; color: #c0392b;
+  font-size: 0.8rem; font-family: monospace;
+  border-top: 2px solid #fecaca;
+}
+
+/* ── Spinner ── */
+.spinner {
+  display: inline-block; width: 22px; height: 22px;
+  border: 3px solid var(--border); border-top-color: var(--secondary);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .md-body { padding: 20px; }
+  .content { padding: 16px; }
+}
+
+/* ── Footer ── */
+footer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  height: 36px;
+  background: linear-gradient(130deg, #f9a8d4 0%, #c084fc 50%, #818cf8 100%);
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding: 0 20px;
+  box-shadow: 0 -2px 12px rgba(192, 132, 252, 0.25);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.9);
+}
+footer a {
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+  display: inline-flex; align-items: center;
+}
+footer a:hover { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    🌸 Hanami
+  </div>
+  <button class="open-btn" onclick="triggerOpen()">📂 ファイルを開く</button>
+  <button class="refresh-btn" id="widthBtn" onclick="toggleWidth()" title="表示幅を切り替え">
+    <span id="widthIcon">⇔</span> <span id="widthLabel">全幅</span>
+  </button>
+  <button class="refresh-btn" id="refreshBtn" onclick="refreshFile()" disabled title="ファイルを最新状態に更新">
+    <span class="r-icon">🔄</span> 更新
+  </button>
+  <input type="file" id="fileInput" accept=".md,.markdown,.csv,.txt" style="display:none">
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-title">
+        🕐 最近のファイル
+        <button class="sidebar-clear" onclick="clearHistory()" title="履歴を全削除">クリア</button>
+      </div>
+    </div>
+    <div class="history-scroll" id="historyList">
+      <div class="history-empty">🌷 まだファイルを<br>開いていません</div>
+    </div>
+  </aside>
+
+  <main class="content" id="content">
+    <div class="welcome" id="welcome">
+      <div class="welcome-emoji">🌸</div>
+      <div class="welcome-title">Hanami</div>
+      <div class="welcome-sub">
+        📄 Markdown (.md) &nbsp;/&nbsp; 📊 CSV ファイルを<br>美しく表示します
+      </div>
+      <div class="welcome-hint">
+        <strong>📂 ファイルを開く</strong> ボタンをクリック<br>または、ここにファイルをドロップ
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════
+   Markdown Parser (pure JS, GFM subset)
+═══════════════════════════════════════ */
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function parseInline(text) {
+  // 画像
+  text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
+    (_,alt,src)=>`<img src="${src}" alt="${escHtml(alt)}" loading="lazy">`);
+  // リンク
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+    (_,label,href)=>`<a href="${escHtml(href)}" target="_blank" rel="noopener">${label}</a>`);
+  // 自動リンク
+  text = text.replace(/<(https?:\/\/[^>]+)>/g,
+    (_,url)=>`<a href="${url}" target="_blank" rel="noopener">${escHtml(url)}</a>`);
+  // 太字+イタリック
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  text = text.replace(/___(.+?)___/g,'<strong><em>$1</em></strong>');
+  // 太字
+  text = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  text = text.replace(/__(.+?)__/g,'<strong>$1</strong>');
+  // イタリック
+  text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');
+  text = text.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g,'<em>$1</em>');
+  // 取り消し線
+  text = text.replace(/~~(.+?)~~/g,'<del>$1</del>');
+  return text;
+}
+
+function parseTable(rows) {
+  if (rows.length < 2) return rows.join('\n');
+
+  const parseRow = r => r.split('|').slice(1,-1).map(c=>c.trim());
+
+  const headers = parseRow(rows[0]);
+  const aligns  = parseRow(rows[1]).map(a=>{
+    const l=a.startsWith(':'), r=a.endsWith(':');
+    return l&&r?'center':r?'right':l?'left':'';
+  });
+  const dataRows = rows.slice(2);
+
+  const th = headers.map((h,i)=>{
+    const s = aligns[i]?` style="text-align:${aligns[i]}"`:'';
+    return `<th${s}>${parseInline(h)}</th>`;
+  }).join('');
+
+  const tb = dataRows.map(row=>{
+    const cells = parseRow(row);
+    const tds = headers.map((_,i)=>{
+      const s = aligns[i]?` style="text-align:${aligns[i]}"`:'';
+      return `<td${s}>${parseInline(cells[i]||'')}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+
+  return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div>`;
+}
+
+function parseListBlock(lines) {
+  function getIndent(l){ return l.match(/^([ \t]*)/)[1].replace(/\t/g,'  ').length; }
+  function isOrdered(l){ return /^\s*\d+\./.test(l); }
+  function getContent(l){ return l.replace(/^\s*(?:[-*+]|\d+\.)\s+/,''); }
+
+  function build(items, baseIndent) {
+    let html='', i=0, listType=null;
+    while(i < items.length){
+      const item = items[i];
+      const indent = getIndent(item);
+      if(indent < baseIndent){ break; }
+      if(indent > baseIndent){ i++; continue; }
+
+      const type = isOrdered(item) ? 'ol' : 'ul';
+      if(type !== listType){
+        if(listType) html += `</${listType}>`;
+        listType = type;
+        html += `<${type}>`;
+      }
+
+      let content = getContent(item);
+      const cb = content.match(/^\[([ xX])\]\s*(.*)/);
+      if(cb){
+        const checked = cb[1].trim() ? ' checked' : '';
+        content = `<input type="checkbox"${checked} disabled> ${parseInline(cb[2])}`;
+      } else {
+        content = parseInline(content);
+      }
+
+      // 子アイテム収集
+      const children=[];
+      let j = i+1;
+      while(j < items.length && getIndent(items[j]) > indent){
+        children.push(items[j]); j++;
+      }
+
+      const childHtml = children.length > 0
+        ? build(children, getIndent(children[0]))
+        : '';
+      html += `<li>${content}${childHtml}</li>`;
+      i = j;
+    }
+    if(listType) html += `</${listType}>`;
+    return html;
+  }
+
+  return build(lines, getIndent(lines[0]));
+}
+
+function parseMarkdown(md) {
+  const store=[];
+  const save = html => { store.push(html); return `\x02${store.length-1}\x03`; };
+  const restore = s => s.replace(/\x02(\d+)\x03/g,(_,i)=>store[+i]);
+  const isProtected = s => /^\x02\d+\x03$/.test(s.trim());
+
+  const lines = md.split('\n');
+  const out=[];
+  let i=0;
+
+  while(i < lines.length){
+    const line = lines[i];
+
+    /* フェンスコードブロック */
+    if(/^```/.test(line)){
+      const lang = line.slice(3).trim();
+      const codeLines=[];
+      i++;
+      while(i < lines.length && !/^```/.test(lines[i])){ codeLines.push(lines[i]); i++; }
+      i++;
+
+      if(lang === 'mermaid'){
+        const head = `<div class="mermaid-block-head">` +
+          `<span class="code-lang-label">mermaid</span>` +
+          `<span class="mermaid-zoom-scale">100%</span>` +
+          `<div class="mermaid-zoom-btns">` +
+            `<button class="mz-out" title="縮小">－</button>` +
+            `<button class="mz-reset" title="リセット">⟳</button>` +
+            `<button class="mz-in" title="拡大">＋</button>` +
+          `</div></div>`;
+        out.push(save(
+          `<div class="mermaid-block">${head}` +
+          `<div class="mermaid">${escHtml(codeLines.join('\n'))}</div></div>`
+        ));
+      } else {
+        const cls  = lang ? ` class="language-${escHtml(lang)}"` : '';
+        const head = `<div class="code-block-head">` +
+          `<span class="code-lang-label">${lang ? escHtml(lang) : '&nbsp;'}</span>` +
+          `<button class="copy-btn" onclick="copyCode(this)">コピー</button></div>`;
+        out.push(save(
+          `<div class="code-block">${head}<pre><code${cls}>${escHtml(codeLines.join('\n'))}</code></pre></div>`
+        ));
+      }
+      continue;
+    }
+
+    /* テーブル: | ... | の後にセパレーター行 */
+    if(/^\|/.test(line) && i+1 < lines.length && /^\|[\s\-:|]+\|/.test(lines[i+1])){
+      const tableRows=[];
+      while(i < lines.length && /^\|/.test(lines[i])){ tableRows.push(lines[i]); i++; }
+      out.push(save(parseTable(tableRows)));
+      continue;
+    }
+
+    /* 見出し */
+    const hm = line.match(/^(#{1,6})\s+(.+?)(?:\s+#+)?$/);
+    if(hm){
+      const n=hm[1].length;
+      const id = hm[2].toLowerCase().replace(/\s+/g,'-').replace(/[^\w　-鿿-]/g,'');
+      out.push(`<h${n} id="${id}">${parseInline(hm[2])}</h${n}>`);
+      i++; continue;
+    }
+
+    /* 水平線 */
+    if(/^(?:[-*_] ?){3,}$/.test(line.trim())){
+      out.push('<hr>');
+      i++; continue;
+    }
+
+    /* 引用 */
+    if(line.startsWith('>')){
+      const qLines=[];
+      while(i < lines.length && (lines[i].startsWith('>') || lines[i].trim()==='') ){
+        qLines.push(lines[i].startsWith('>') ? lines[i].replace(/^>\s?/,'') : '');
+        i++;
+      }
+      out.push(save(`<blockquote>${parseMarkdown(qLines.join('\n'))}</blockquote>`));
+      continue;
+    }
+
+    /* リスト */
+    if(/^[ \t]*(?:[-*+]|\d+\.)\s/.test(line)){
+      const listLines=[];
+      while(i < lines.length &&
+        (/^[ \t]*(?:[-*+]|\d+\.)\s/.test(lines[i]) || /^[ \t]{2,}\S/.test(lines[i]))
+      ){
+        listLines.push(lines[i]); i++;
+      }
+      out.push(parseListBlock(listLines));
+      continue;
+    }
+
+    /* 空行 */
+    if(line.trim()===''){
+      out.push('');
+      i++; continue;
+    }
+
+    /* 段落 */
+    const paraLines=[];
+    while(i < lines.length){
+      const l=lines[i];
+      if(l.trim()==='' || /^#{1,6}\s/.test(l) || l.startsWith('>') ||
+         /^```/.test(l) || /^\|/.test(l) ||
+         /^[ \t]*(?:[-*+]|\d+\.)\s/.test(l) ||
+         /^(?:[-*_] ?){3,}$/.test(l.trim())) break;
+      paraLines.push(l); i++;
+    }
+    if(paraLines.length>0){
+      // 末尾2スペースまたは \  が改行
+      const joined = paraLines.join('\n')
+        .replace(/  \n/g,'<br>\n').replace(/\\\n/g,'<br>\n');
+      out.push(`<p>${parseInline(joined.replace(/\n/g,' '))}</p>`);
+    }
+  }
+
+  // 空行をはさんでブロックを結合
+  let html = out.join('\n');
+  html = restore(html);
+  return html;
+}
+
+/* ═══════════════════════════════════════
+   CSV Parser
+═══════════════════════════════════════ */
+
+function parseCSV(text) {
+  // BOM除去
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+
+  const rows=[];
+  let i=0;
+  const len=text.length;
+
+  while(i <= len){
+    const row=[];
+    // 行の終わりまで
+    let atEnd = false;
+    while(!atEnd){
+      if(i >= len){ atEnd=true; break; }
+      if(text[i]==='"'){
+        // クォートフィールド
+        let field=''; i++;
+        while(i < len){
+          if(text[i]==='"'){
+            if(i+1 < len && text[i+1]==='"'){ field+='"'; i+=2; }
+            else { i++; break; }
+          } else { field+=text[i++]; }
+        }
+        row.push(field);
+        if(i < len && text[i]===',') i++;
+        else if(i < len && (text[i]==='\n' || text[i]==='\r')){ if(text[i]==='\r'&&text[i+1]==='\n')i++; i++; atEnd=true; }
+        else atEnd=true;
+      } else {
+        let start=i;
+        while(i < len && text[i]!==',' && text[i]!=='\n' && text[i]!=='\r') i++;
+        row.push(text.slice(start,i).trim());
+        if(i < len && text[i]===',') i++;
+        else if(i < len && (text[i]==='\n'||text[i]==='\r')){ if(text[i]==='\r'&&text[i+1]==='\n')i++; i++; atEnd=true; }
+        else atEnd=true;
+      }
+    }
+    if(row.length>0 && !(row.length===1&&row[0]==='')) rows.push(row);
+    if(i>=len) break;
+  }
+  return rows;
+}
+
+function renderCSV(rows, filename) {
+  if(rows.length===0) return '<p>データがありません。</p>';
+
+  const headers = rows[0];
+  const data    = rows.slice(1);
+
+  const thHtml = '<th class="csv-row-num">#</th>' +
+    headers.map(h=>`<th title="${escHtml(h)}">${escHtml(h)}</th>`).join('');
+
+  const bodyRows = data.map((row,ri)=>{
+    const tds = headers.map((_,ci)=>{
+      const v = row[ci]!==undefined ? escHtml(row[ci]) : '';
+      return `<td title="${v}">${v}</td>`;
+    }).join('');
+    return `<tr data-row="${ri}"><td class="csv-row-num">${ri+1}</td>${tds}</tr>`;
+  }).join('');
+
+  return `
+<div class="csv-wrap">
+  <div class="csv-meta">
+    <span>📊 <strong>${escHtml(filename)}</strong></span>
+    <span>列: <strong>${headers.length}</strong></span>
+    <span>行: <strong>${data.length}</strong></span>
+  </div>
+  <div class="csv-box">
+    <div class="csv-toolbar">
+      <label for="csvSearch">🔍 検索:</label>
+      <input id="csvSearch" class="csv-search-input" type="text" placeholder="キーワードを入力…" oninput="filterCSV(this.value)">
+      <span class="csv-count" id="csvCount">${data.length} 件</span>
+    </div>
+    <div class="csv-scroll">
+      <table class="csv-table" id="csvTable">
+        <thead><tr>${thHtml}</tr></thead>
+        <tbody id="csvBody">${bodyRows}</tbody>
+      </table>
+    </div>
+  </div>
+</div>`;
+}
+
+function filterCSV(query) {
+  const tbody = document.getElementById('csvBody');
+  const count = document.getElementById('csvCount');
+  if(!tbody) return;
+  const rows  = tbody.querySelectorAll('tr');
+  const q     = query.toLowerCase().trim();
+  let visible = 0;
+
+  rows.forEach(row=>{
+    const tds = row.querySelectorAll('td:not(.csv-row-num)');
+    let match = !q;
+    tds.forEach(td=>{
+      const orig = td.getAttribute('title') || '';
+      if(!q){ td.innerHTML = escHtml(orig); return; }
+      if(orig.toLowerCase().includes(q)){
+        match=true;
+        const idx = orig.toLowerCase().indexOf(q);
+        td.innerHTML = escHtml(orig.slice(0,idx))
+          + `<mark>${escHtml(orig.slice(idx,idx+q.length))}</mark>`
+          + escHtml(orig.slice(idx+q.length));
+      } else {
+        td.innerHTML = escHtml(orig);
+      }
+    });
+    row.style.display = match ? '' : 'none';
+    if(match) visible++;
+  });
+
+  if(count) count.textContent = q ? `${visible} 件` : `${rows.length} 件`;
+}
+
+/* ═══════════════════════════════════════
+   IndexedDB — FileSystemFileHandle 保存
+   (File System Access API 対応ブラウザのみ利用)
+═══════════════════════════════════════ */
+
+const IDB_NAME  = 'kwv_idb';
+const IDB_STORE = 'handles';
+
+function openIDB(){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE,{keyPath:'name'});
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+async function idbSaveHandle(name, handle){
+  try{
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put({name, handle});
+    return new Promise((res,rej)=>{ tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  } catch(_){}
+}
+
+async function idbGetHandle(name){
+  try{
+    const db  = await openIDB();
+    const tx  = db.transaction(IDB_STORE,'readonly');
+    const req = tx.objectStore(IDB_STORE).get(name);
+    return new Promise((res,rej)=>{ req.onsuccess=()=>res(req.result?.handle); req.onerror=()=>rej(req.error); });
+  } catch(_){ return null; }
+}
+
+async function idbDeleteHandle(name){
+  try{
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).delete(name);
+    return new Promise((res,rej)=>{ tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  } catch(_){}
+}
+
+async function idbClearHandles(){
+  try{
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).clear();
+    return new Promise((res,rej)=>{ tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  } catch(_){}
+}
+
+/* ═══════════════════════════════════════
+   History (LocalStorage)
+═══════════════════════════════════════ */
+
+const HISTORY_KEY = 'kwv_history';
+const MAX_HISTORY = 30;
+
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+
+function saveToHistory(entry){
+  let h = loadHistory();
+  h = h.filter(x=>x.name!==entry.name);
+  h.unshift(entry);
+  if(h.length > MAX_HISTORY) h=h.slice(0,MAX_HISTORY);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+}
+
+function removeFromHistory(name){
+  let h = loadHistory().filter(x=>x.name!==name);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+}
+
+async function clearHistory(){
+  if(!confirm('履歴をすべて削除しますか？')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  await idbClearHandles();
+  renderHistory();
+  showToast('🗑️ 履歴を削除しました');
+}
+
+let currentFile       = null;
+let currentFileHandle = null; // FileSystemFileHandle (File System Access API)
+let currentFileObj    = null; // フォールバック用 File オブジェクト
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  const h = loadHistory();
+  if(h.length===0){
+    list.innerHTML='<div class="history-empty">🌷 まだファイルを<br>開いていません</div>';
+    return;
+  }
+  list.innerHTML = h.map(item=>`
+    <div class="h-item${currentFile===item.name?' active':''}"
+         data-name="${escHtml(item.name)}"
+         onclick="openFromHistory(this.dataset.name)">
+      <span class="h-icon">${item.type==='csv'?'📊':'📄'}</span>
+      <div class="h-info">
+        <div class="h-name" title="${escHtml(item.name)}">${escHtml(item.name)}</div>
+        <div class="h-date">${item.date}</div>
+      </div>
+      <button class="h-del" onclick="event.stopPropagation();deleteHistoryItem(this.closest('[data-name]').dataset.name)" title="削除">✕</button>
+    </div>
+  `).join('');
+}
+
+function deleteHistoryItem(name){
+  removeFromHistory(name);
+  idbDeleteHandle(name);
+  if(currentFile===name){
+    currentFile=null;
+    document.getElementById('refreshBtn').disabled=true;
+    document.getElementById('content').innerHTML='<div class="welcome" id="welcome">'
+      +'<div class="welcome-emoji">🌸</div>'
+      +'<div class="welcome-title">Hanami</div>'
+      +'<div class="welcome-sub">📄 Markdown / 📊 CSV ファイルを美しく表示します</div>'
+      +'</div>';
+  }
+  renderHistory();
+}
+
+function openFromHistory(name){
+  // Firefox など File System Access API 非対応: 即座にダイアログを開く（同期）
+  if(!window.showOpenFilePicker){
+    showToast(`📂 「${name}」を選択してください`);
+    document.getElementById('fileInput').click();
+    return;
+  }
+  // Chrome/Edge: IndexedDBのハンドルで再オープン（非同期）
+  _openFromHistoryAsync(name);
+}
+
+async function _openFromHistoryAsync(name){
+  const handle = await idbGetHandle(name);
+  if(handle){
+    try{
+      let perm = await handle.queryPermission({mode:'read'});
+      if(perm !== 'granted') perm = await handle.requestPermission({mode:'read'});
+      if(perm === 'granted'){
+        currentFileHandle = handle;
+        currentFileObj    = null;
+        const file = await handle.getFile();
+        handleFile(file);
+        return;
+      }
+    } catch(_){}
+  }
+  // ハンドルなし / パーミッション拒否 → ダイアログで選択
+  showToast(`📂 「${name}」を選択してください`);
+  try{
+    const [h] = await window.showOpenFilePicker({
+      types:[{description:'テキストファイル', accept:{'text/*':['.md','.markdown','.csv','.txt']}}],
+      multiple:false
+    });
+    currentFileHandle = h;
+    currentFileObj    = null;
+    await idbSaveHandle(h.name, h);
+    handleFile(await h.getFile());
+  } catch(e){ if(e.name!=='AbortError') showToast('❌ キャンセルされました'); }
+}
+
+/* ═══════════════════════════════════════
+   File handling
+═══════════════════════════════════════ */
+
+async function triggerOpen(){
+  if(window.showOpenFilePicker){
+    try{
+      const [handle] = await window.showOpenFilePicker({
+        types:[{ description:'テキストファイル',
+                 accept:{'text/*':['.md','.markdown','.csv','.txt']} }],
+        multiple: false
+      });
+      currentFileHandle = handle;
+      currentFileObj    = null;
+      await idbSaveHandle(handle.name, handle);
+      const file = await handle.getFile();
+      handleFile(file);
+    } catch(e){
+      if(e.name !== 'AbortError') showToast('❌ ファイルを開けませんでした');
+    }
+  } else {
+    document.getElementById('fileInput').click();
+  }
+}
+
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(f){
+    currentFileHandle = null;
+    currentFileObj    = f;
+    handleFile(f);
+  }
+  e.target.value='';
+});
+
+async function refreshFile(){
+  if(!currentFileHandle && !currentFileObj){
+    showToast('⚠️ 先にファイルを開いてください');
+    return;
+  }
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  try{
+    let file;
+    if(currentFileHandle){
+      file = await currentFileHandle.getFile(); // ディスク上の最新内容を取得
+    } else {
+      file = currentFileObj; // input 経由: 同一 File オブジェクトを再読み
+    }
+    handleFile(file, true);
+  } catch(e){
+    showToast('❌ 更新に失敗しました');
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  }
+}
+
+function handleFile(file, isRefresh=false){
+  const ext = file.name.split('.').pop().toLowerCase();
+  const type = (ext==='csv') ? 'csv' : 'md';
+  const reader = new FileReader();
+
+  const content = document.getElementById('content');
+  // 更新時はスクロール位置を保持するため現在位置を記録
+  const prevScroll = isRefresh ? content.scrollTop : 0;
+
+  if(!isRefresh){
+    content.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px;gap:12px;color:#a855f7;font-size:1rem"><div class="spinner"></div> 読み込み中…</div>';
+  }
+
+  reader.onload = e=>{
+    const text = e.target.result;
+    currentFile = file.name;
+
+    const now = new Date();
+    const date = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const size = formatSize(file.size);
+
+    saveToHistory({ name: file.name, type, date, size });
+    renderHistory();
+
+    const icon = type==='csv' ? '📊' : '📄';
+    const typeLabel = type==='csv' ? 'CSV' : 'Markdown';
+    const fileBar = `
+      <div class="file-bar">
+        <span class="file-bar-icon">${icon}</span>
+        <span class="file-bar-name">${escHtml(file.name)}</span>
+        <span class="file-bar-type">${typeLabel}</span>
+        <span class="file-bar-size">${size}</span>
+      </div>`;
+
+    if(type==='csv'){
+      const rows = parseCSV(text);
+      content.innerHTML = fileBar + renderCSV(rows, file.name);
+    } else {
+      const html = parseMarkdown(text);
+      content.innerHTML = fileBar + `<article class="md-body">${html}</article>`;
+      // mermaidブロックをレンダリングしてズーム機能を設定
+      const mermaidNodes = content.querySelectorAll('.mermaid');
+      if(mermaidNodes.length > 0){
+        mermaid.run({ nodes: mermaidNodes }).then(()=>{
+          content.querySelectorAll('.mermaid-block').forEach(setupMermaidZoom);
+        }).catch(()=>{});
+      }
+    }
+
+    content.scrollTop = isRefresh ? prevScroll : 0;
+
+    // 更新ボタンを有効化
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+
+    showToast(isRefresh ? `🔄 ${file.name} を更新しました` : `✨ ${file.name} を開きました`);
+  };
+
+  reader.onerror = ()=>{
+    content.innerHTML='<p style="color:red;padding:40px">ファイルの読み込みに失敗しました。</p>';
+    document.getElementById('refreshBtn').classList.remove('spinning');
+    document.getElementById('refreshBtn').disabled = false;
+  };
+
+  reader.readAsText(file, 'utf-8');
+}
+
+function formatSize(bytes){
+  if(bytes < 1024) return bytes+'B';
+  if(bytes < 1048576) return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1048576).toFixed(1)+'MB';
+}
+
+/* ═══════════════════════════════════════
+   Mermaid zoom & pan
+═══════════════════════════════════════ */
+
+function setupMermaidZoom(block){
+  const container = block.querySelector('.mermaid');
+  const svg       = container && container.querySelector('svg');
+  if(!svg) return;
+
+  // SVG の初期サイズ制限を外してスケールで制御
+  svg.style.maxWidth  = 'none';
+  svg.style.maxHeight = 'none';
+
+  let scale = 1, panX = 0, panY = 0;
+
+  const scaleLabel = block.querySelector('.mermaid-zoom-scale');
+
+  function applyTransform(){
+    svg.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+    if(scaleLabel) scaleLabel.textContent = Math.round(scale * 100) + '%';
+  }
+
+  // ── ホイールズーム（マウス位置基準） ──
+  container.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const rect   = container.getBoundingClientRect();
+    const ox     = e.clientX - rect.left - rect.width  / 2;
+    const oy     = e.clientY - rect.top  - rect.height / 2;
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const next   = Math.min(8, Math.max(0.1, scale * factor));
+    panX = ox - (ox - panX) * (next / scale);
+    panY = oy - (oy - panY) * (next / scale);
+    scale = next;
+    applyTransform();
+  }, { passive: false });
+
+  // ── ドラッグパン ──
+  let dragging = false, sx = 0, sy = 0;
+
+  container.addEventListener('mousedown', e=>{
+    if(e.button !== 0) return;
+    dragging = true; sx = e.clientX - panX; sy = e.clientY - panY;
+    container.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    panX = e.clientX - sx; panY = e.clientY - sy;
+    applyTransform();
+  });
+  window.addEventListener('mouseup', ()=>{
+    dragging = false; container.classList.remove('dragging');
+  });
+
+  // ── タッチ操作（ピンチズーム＋パン） ──
+  let lastDist = null, lastMid = null;
+
+  container.addEventListener('touchstart', e=>{
+    if(e.touches.length === 2){
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      lastMid = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+      };
+    } else if(e.touches.length === 1){
+      dragging = true;
+      sx = e.touches[0].clientX - panX;
+      sy = e.touches[0].clientY - panY;
+    }
+  }, { passive: true });
+
+  container.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    if(e.touches.length === 2 && lastDist !== null){
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const mid = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+      };
+      const rect   = container.getBoundingClientRect();
+      const ox     = lastMid.x - rect.left - rect.width  / 2;
+      const oy     = lastMid.y - rect.top  - rect.height / 2;
+      const factor = dist / lastDist;
+      const next   = Math.min(8, Math.max(0.1, scale * factor));
+      panX = ox - (ox - panX) * (next / scale);
+      panY = oy - (oy - panY) * (next / scale);
+      panX += mid.x - lastMid.x;
+      panY += mid.y - lastMid.y;
+      scale = next; lastDist = dist; lastMid = mid;
+      applyTransform();
+    } else if(e.touches.length === 1 && dragging){
+      panX = e.touches[0].clientX - sx;
+      panY = e.touches[0].clientY - sy;
+      applyTransform();
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', ()=>{ dragging=false; lastDist=null; lastMid=null; });
+
+  // ── ボタン ──
+  function zoom(factor){
+    scale = Math.min(8, Math.max(0.1, scale * factor));
+    applyTransform();
+  }
+  function reset(){ scale=1; panX=0; panY=0; applyTransform(); }
+
+  block.querySelector('.mz-in')   ?.addEventListener('click', ()=>zoom(1.25));
+  block.querySelector('.mz-out')  ?.addEventListener('click', ()=>zoom(1/1.25));
+  block.querySelector('.mz-reset')?.addEventListener('click', reset);
+
+  applyTransform();
+}
+
+/* ═══════════════════════════════════════
+   Width toggle
+═══════════════════════════════════════ */
+
+function toggleWidth(){
+  const content = document.getElementById('content');
+  const isWide  = content.classList.toggle('wide');
+  document.getElementById('widthLabel').textContent = isWide ? '標準' : '全幅';
+  localStorage.setItem('kwv_wide', isWide ? '1' : '0');
+}
+
+(function initWidth(){
+  if(localStorage.getItem('kwv_wide') === '1'){
+    document.getElementById('content').classList.add('wide');
+    document.getElementById('widthLabel').textContent = '標準';
+  }
+})();
+
+/* ═══════════════════════════════════════
+   Copy button
+═══════════════════════════════════════ */
+
+function copyCode(btn){
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre ? pre.innerText : '';
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✓ コピー済み';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='コピー'; btn.classList.remove('copied'); }, 2000);
+  }).catch(()=>{ showToast('コピーに失敗しました'); });
+}
+
+/* ═══════════════════════════════════════
+   Toast
+═══════════════════════════════════════ */
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className='toast';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
+}
+
+/* ═══════════════════════════════════════
+   Drag & Drop
+═══════════════════════════════════════ */
+
+document.addEventListener('dragover', e=>{ e.preventDefault(); document.body.classList.add('drag-over'); });
+document.addEventListener('dragleave', e=>{ if(e.relatedTarget===null) document.body.classList.remove('drag-over'); });
+document.addEventListener('drop', async e=>{
+  e.preventDefault();
+  document.body.classList.remove('drag-over');
+  // File System Access API 対応: ハンドルを取得して更新ボタンに活用
+  if(window.showOpenFilePicker && e.dataTransfer.items && e.dataTransfer.items[0]){
+    try{
+      const handle = await e.dataTransfer.items[0].getAsFileSystemHandle();
+      if(handle && handle.kind==='file'){
+        currentFileHandle = handle;
+        currentFileObj    = null;
+        await idbSaveHandle(handle.name, handle);
+        const file = await handle.getFile();
+        handleFile(file);
+        return;
+      }
+    } catch(_){}
+  }
+  const f = e.dataTransfer.files[0];
+  if(f){ currentFileHandle=null; currentFileObj=f; handleFile(f); }
+});
+
+/* ── Init ── */
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  themeVariables: {
+    primaryColor:       '#f9a8d4',
+    primaryBorderColor: '#c084fc',
+    primaryTextColor:   '#3b0764',
+    secondaryColor:     '#ede9fe',
+    tertiaryColor:      '#fce7f3',
+    lineColor:          '#c084fc',
+    edgeLabelBackground:'#fdf4ff',
+    fontFamily: 'Hiragino Kaku Gothic ProN, Hiragino Sans, Meiryo, sans-serif',
+  }
+});
+
+renderHistory();
+</script>
+<footer>
+  <span>© 2026 nattoujam</span>
+  <a href="https://github.com/nattoujam/hanami" target="_blank" rel="noopener" title="GitHub">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+  </a>
+</footer>
+</body>
+</html>
