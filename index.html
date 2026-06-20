@@ -618,6 +618,12 @@ function escHtml(s) {
 }
 
 function parseInline(text) {
+  const store = [];
+  const protect = html => { store.push(html); return `\x04${store.length-1}\x05`; };
+  const unprotect = s => s.replace(/\x04(\d+)\x05/g, (m, i) => store[+i] ?? m);
+
+  // インラインコードを保護
+  text = text.replace(/``(.+?)``|`(.+?)`/g, (_, c2, c1) => protect(`<code>${escHtml(c2 || c1)}</code>`));
   // 画像
   text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
     (_,alt,src)=>`<img src="${src}" alt="${escHtml(alt)}" loading="lazy">`);
@@ -638,7 +644,8 @@ function parseInline(text) {
   text = text.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g,'<em>$1</em>');
   // 取り消し線
   text = text.replace(/~~(.+?)~~/g,'<del>$1</del>');
-  return text;
+
+  return unprotect(text);
 }
 
 function parseTable(rows) {
@@ -721,8 +728,8 @@ function parseListBlock(lines) {
 
 function parseMarkdown(md) {
   const store=[];
-  const save = html => { store.push(html); return `\x02${store.length-1}\x03`; };
-  const restore = s => s.replace(/\x02(\d+)\x03/g,(_,i)=>store[+i]);
+  const protect = html => { store.push(html); return `\x02${store.length-1}\x03`; };
+  const unprotect = s => s.replace(/\x02(\d+)\x03/g, (m, i) => store[+i] ?? m);
   const isProtected = s => /^\x02\d+\x03$/.test(s.trim());
 
   const lines = md.split('\n');
@@ -749,7 +756,7 @@ function parseMarkdown(md) {
             `<button class="mz-reset" title="リセット">⟳</button>` +
             `<button class="mz-in" title="拡大">＋</button>` +
           `</div></div>`;
-        out.push(save(
+        out.push(protect(
           `<div class="mermaid-block">${head}` +
           `<div class="mermaid">${escHtml(codeLines.join('\n'))}</div></div>`
         ));
@@ -758,7 +765,7 @@ function parseMarkdown(md) {
         const head = `<div class="code-block-head">` +
           `<span class="code-lang-label">${lang ? escHtml(lang) : '&nbsp;'}</span>` +
           `<button class="copy-btn" onclick="copyCode(this)">コピー</button></div>`;
-        out.push(save(
+        out.push(protect(
           `<div class="code-block">${head}<pre><code${cls}>${escHtml(codeLines.join('\n'))}</code></pre></div>`
         ));
       }
@@ -769,7 +776,7 @@ function parseMarkdown(md) {
     if(/^\|/.test(line) && i+1 < lines.length && /^\|[\s\-:|]+\|/.test(lines[i+1])){
       const tableRows=[];
       while(i < lines.length && /^\|/.test(lines[i])){ tableRows.push(lines[i]); i++; }
-      out.push(save(parseTable(tableRows)));
+      out.push(protect(parseTable(tableRows)));
       continue;
     }
 
@@ -795,7 +802,7 @@ function parseMarkdown(md) {
         qLines.push(lines[i].startsWith('>') ? lines[i].replace(/^>\s?/,'') : '');
         i++;
       }
-      out.push(save(`<blockquote>${parseMarkdown(qLines.join('\n'))}</blockquote>`));
+      out.push(protect(`<blockquote>${parseMarkdown(qLines.join('\n'))}</blockquote>`));
       continue;
     }
 
@@ -837,7 +844,7 @@ function parseMarkdown(md) {
 
   // 空行をはさんでブロックを結合
   let html = out.join('\n');
-  html = restore(html);
+  html = unprotect(html);
   return html;
 }
 
