@@ -619,10 +619,14 @@ function escHtml(s) {
 
 function parseInline(text) {
   const store = [];
+  /**
+   * インラインコードの中身（* や _ など）が、後の変換ルール（イタリックや太字など）に
+   * よって誤って変換されないように、一時的に退避（保護）するためのヘルパー。
+   */
   const save = html => { store.push(html); return `\x04${store.length-1}\x05`; };
   const restore = s => s.replace(/\x04(\d+)\x05/g, (m, i) => store[+i] ?? m);
 
-  // インラインコード
+  // インラインコードを最初に抽出し、プレースホルダーに置き換えて保護する
   text = text.replace(/``(.+?)``|`(.+?)`/g, (_, c2, c1) => save(`<code>${escHtml(c2 || c1)}</code>`));
   // 画像
   text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
