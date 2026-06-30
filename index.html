@@ -641,7 +641,7 @@ function parseInline(text) {
   text = text.replace(/__(.+?)__/g,'<strong>$1</strong>');
   // イタリック
   text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');
-  text = text.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g,'<em>$1</em>');
+  text = text.replace(/(?<!\w)_(?!_)(.+?)(?<!_)_(?!\w)/g,'<em>$1</em>');
   // 取り消し線
   text = text.replace(/~~(.+?)~~/g,'<del>$1</del>');
 
