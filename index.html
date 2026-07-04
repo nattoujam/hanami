@@ -330,7 +330,7 @@ header {
 
 .md-body input[type="checkbox"] {
   margin-right: 5px; accent-color: var(--secondary);
-  vertical-align: middle;
+  vertical-align: middle; cursor: pointer;
 }
 
 /* Code */
@@ -677,7 +677,7 @@ function parseTable(rows) {
   return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div>`;
 }
 
-function parseListBlock(lines) {
+function parseListBlock(lines, cbCounter) {
   function getIndent(l){ return l.match(/^([ \t]*)/)[1].replace(/\t/g,'  ').length; }
   function isOrdered(l){ return /^\s*\d+\./.test(l); }
   function getContent(l){ return l.replace(/^\s*(?:[-*+]|\d+\.)\s+/,''); }
@@ -701,7 +701,8 @@ function parseListBlock(lines) {
       const cb = content.match(/^\[([ xX])\]\s*(.*)/);
       if(cb){
         const checked = cb[1].trim() ? ' checked' : '';
-        content = `<input type="checkbox"${checked} disabled> ${parseInline(cb[2])}`;
+        const idx = cbCounter.n++;
+        content = `<input type="checkbox"${checked} data-cb-index="${idx}"> ${parseInline(cb[2])}`;
       } else {
         content = parseInline(content);
       }
@@ -726,7 +727,8 @@ function parseListBlock(lines) {
   return build(lines, getIndent(lines[0]));
 }
 
-function parseMarkdown(md) {
+function parseMarkdown(md, cbCounter) {
+  cbCounter = cbCounter || { n: 0 };
   const store=[];
   const protect = html => { store.push(html); return `\x02${store.length-1}\x03`; };
   const unprotect = s => s.replace(/\x02(\d+)\x03/g, (m, i) => store[+i] ?? m);
@@ -802,7 +804,7 @@ function parseMarkdown(md) {
         qLines.push(lines[i].startsWith('>') ? lines[i].replace(/^>\s?/,'') : '');
         i++;
       }
-      out.push(protect(`<blockquote>${parseMarkdown(qLines.join('\n'))}</blockquote>`));
+      out.push(protect(`<blockquote>${parseMarkdown(qLines.join('\n'), cbCounter)}</blockquote>`));
       continue;
     }
 
@@ -814,7 +816,7 @@ function parseMarkdown(md) {
       ){
         listLines.push(lines[i]); i++;
       }
-      out.push(parseListBlock(listLines));
+      out.push(parseListBlock(listLines, cbCounter));
       continue;
     }
 
@@ -1054,6 +1056,7 @@ async function clearHistory(){
 let currentFile       = null;
 let currentFileHandle = null; // FileSystemFileHandle (File System Access API)
 let currentFileObj    = null; // フォールバック用 File オブジェクト
+let currentFileText   = null; // 読み込んだMarkdown元テキスト（チェックボックス書き戻し用）
 
 function renderHistory(){
   const list = document.getElementById('historyList');
@@ -1224,9 +1227,11 @@ function handleFile(file, isRefresh=false){
       </div>`;
 
     if(type==='csv'){
+      currentFileText = null;
       const rows = parseCSV(text);
       content.innerHTML = fileBar + renderCSV(rows, file.name);
     } else {
+      currentFileText = text;
       const html = parseMarkdown(text);
       content.innerHTML = fileBar + `<article class="md-body">${html}</article>`;
       // mermaidブロックをレンダリングしてズーム機能を設定
@@ -1255,6 +1260,62 @@ function handleFile(file, isRefresh=false){
   };
 
   reader.readAsText(file, 'utf-8');
+}
+
+/* ═══════════════════════════════════════
+   タスクリストのチェックボックス → 元ファイル書き戻し
+═══════════════════════════════════════ */
+
+document.getElementById('content').addEventListener('change', e=>{
+  const cb = e.target;
+  if(cb.tagName==='INPUT' && cb.type==='checkbox' && cb.dataset.cbIndex !== undefined){
+    toggleCheckboxAndSave(parseInt(cb.dataset.cbIndex, 10), cb.checked);
+  }
+});
+
+// 元テキスト中でN番目（0始まり、出現順）のタスクリスト行のチェック状態を書き換える
+function setCheckboxState(text, idx, checked){
+  const lines = text.split('\n');
+  let n = 0;
+  for(let li=0; li<lines.length; li++){
+    const stripped = lines[li].replace(/^>\s?/, '');
+    if(/^[ \t]*(?:[-*+]|\d+\.)\s+\[[ xX]\]/.test(stripped)){
+      if(n === idx){
+        const mark = checked ? 'x' : ' ';
+        const prefixLen = lines[li].length - stripped.length;
+        lines[li] = lines[li].slice(0, prefixLen) + stripped.replace(/\[[ xX]\]/, `[${mark}]`);
+        return lines.join('\n');
+      }
+      n++;
+    }
+  }
+  return null;
+}
+
+async function toggleCheckboxAndSave(idx, checked){
+  if(currentFileText == null) return;
+  const updated = setCheckboxState(currentFileText, idx, checked);
+  if(updated == null) return;
+  currentFileText = updated;
+
+  if(!currentFileHandle){
+    showToast('⚠️ このファイルは書き戻しに対応していません（対応ブラウザで開き直してください）');
+    return;
+  }
+  try{
+    let perm = await currentFileHandle.queryPermission({mode:'readwrite'});
+    if(perm !== 'granted') perm = await currentFileHandle.requestPermission({mode:'readwrite'});
+    if(perm !== 'granted'){
+      showToast('⚠️ 書き込み権限が許可されませんでした');
+      return;
+    }
+    const writable = await currentFileHandle.createWritable();
+    await writable.write(currentFileText);
+    await writable.close();
+    showToast('✅ 元ファイルを更新しました');
+  } catch(e){
+    showToast('❌ 元ファイルへの保存に失敗しました');
+  }
 }
 
 function formatSize(bytes){
