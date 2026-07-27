@@ -677,6 +677,26 @@ function parseTable(rows) {
   return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div>`;
 }
 
+function renderFencedCode(lang, codeLines) {
+  if(lang === 'mermaid'){
+    const head = `<div class="mermaid-block-head">` +
+      `<span class="code-lang-label">mermaid</span>` +
+      `<span class="mermaid-zoom-scale">100%</span>` +
+      `<div class="mermaid-zoom-btns">` +
+        `<button class="mz-out" title="縮小">－</button>` +
+        `<button class="mz-reset" title="リセット">⟳</button>` +
+        `<button class="mz-in" title="拡大">＋</button>` +
+      `</div></div>`;
+    return `<div class="mermaid-block">${head}` +
+      `<div class="mermaid">${escHtml(codeLines.join('\n'))}</div></div>`;
+  }
+  const cls  = lang ? ` class="language-${escHtml(lang)}"` : '';
+  const head = `<div class="code-block-head">` +
+    `<span class="code-lang-label">${lang ? escHtml(lang) : '&nbsp;'}</span>` +
+    `<button class="copy-btn" onclick="copyCode(this)">コピー</button></div>`;
+  return `<div class="code-block">${head}<pre><code${cls}>${escHtml(codeLines.join('\n'))}</code></pre></div>`;
+}
+
 function parseListBlock(lines, cbCounter) {
   function getIndent(l){ return l.match(/^([ \t]*)/)[1].replace(/\t/g,'  ').length; }
   function isOrdered(l){ return /^\s*\d+\./.test(l); }
@@ -686,9 +706,34 @@ function parseListBlock(lines, cbCounter) {
     let html='', i=0, listType=null;
     while(i < items.length){
       const item = items[i];
+      if(item.trim()===''){ i++; continue; }
       const indent = getIndent(item);
       if(indent < baseIndent){ break; }
       if(indent > baseIndent){ i++; continue; }
+
+      /* リスト項目にぶら下がるフェンスコードブロック */
+      const fenceMatch = item.match(/^([ \t]*)```(.*)$/);
+      if(fenceMatch){
+        const indentStr = fenceMatch[1];
+        const lang = fenceMatch[2].trim();
+        const codeLines=[];
+        let j = i+1;
+        while(j < items.length && !/^[ \t]*```/.test(items[j])){
+          const raw = items[j];
+          codeLines.push(raw.startsWith(indentStr) ? raw.slice(indentStr.length) : raw.replace(/^[ \t]+/,''));
+          j++;
+        }
+        j++; // 閉じフェンス行をスキップ
+        const codeHtml = renderFencedCode(lang, codeLines);
+        if(listType && html.endsWith('</li>')){
+          html = html.slice(0, -5) + codeHtml + '</li>';
+        } else {
+          if(!listType){ listType='ul'; html += '<ul>'; }
+          html += `<li>${codeHtml}</li>`;
+        }
+        i = j;
+        continue;
+      }
 
       const type = isOrdered(item) ? 'ol' : 'ul';
       if(type !== listType){
@@ -707,16 +752,43 @@ function parseListBlock(lines, cbCounter) {
         content = parseInline(content);
       }
 
-      // 子アイテム収集
+      // 子アイテム収集(空行を挟んでも子インデントが続く場合は含める)
       const children=[];
       let j = i+1;
-      while(j < items.length && getIndent(items[j]) > indent){
-        children.push(items[j]); j++;
+      while(j < items.length){
+        if(items[j].trim()===''){
+          let k = j+1;
+          while(k < items.length && items[k].trim()==='') k++;
+          if(k < items.length && getIndent(items[k]) > indent){
+            while(j < k){ children.push(items[j]); j++; }
+            continue;
+          }
+          break;
+        }
+        if(getIndent(items[j]) > indent){ children.push(items[j]); j++; }
+        else break;
       }
 
-      const childHtml = children.length > 0
-        ? build(children, getIndent(children[0]))
-        : '';
+      const nonEmptyChildren = children.filter(c => c.trim() !== '');
+      let childHtml = '';
+      if(nonEmptyChildren.length > 0){
+        const firstIdx = children.findIndex(c => c.trim() !== '');
+        const lastIdx  = children.length - 1 - [...children].reverse().findIndex(c => c.trim() !== '');
+        const soloFence = nonEmptyChildren.length > 1 &&
+          /^[ \t]*```/.test(children[firstIdx]) &&
+          /^[ \t]*```/.test(children[lastIdx]) &&
+          nonEmptyChildren.slice(1, -1).every(c => !/^[ \t]*```/.test(c));
+        if(soloFence){
+          const fm = children[firstIdx].match(/^([ \t]*)```(.*)$/);
+          const indentStr = fm[1];
+          const lang = fm[2].trim();
+          const codeLines = children.slice(firstIdx + 1, lastIdx)
+            .map(raw => raw.startsWith(indentStr) ? raw.slice(indentStr.length) : raw.replace(/^[ \t]+/, ''));
+          childHtml = renderFencedCode(lang, codeLines);
+        } else {
+          childHtml = build(children, getIndent(nonEmptyChildren[0]));
+        }
+      }
       html += `<li>${content}${childHtml}</li>`;
       i = j;
     }
@@ -749,28 +821,7 @@ function parseMarkdown(md, cbCounter) {
       while(i < lines.length && !/^```/.test(lines[i])){ codeLines.push(lines[i]); i++; }
       i++;
 
-      if(lang === 'mermaid'){
-        const head = `<div class="mermaid-block-head">` +
-          `<span class="code-lang-label">mermaid</span>` +
-          `<span class="mermaid-zoom-scale">100%</span>` +
-          `<div class="mermaid-zoom-btns">` +
-            `<button class="mz-out" title="縮小">－</button>` +
-            `<button class="mz-reset" title="リセット">⟳</button>` +
-            `<button class="mz-in" title="拡大">＋</button>` +
-          `</div></div>`;
-        out.push(protect(
-          `<div class="mermaid-block">${head}` +
-          `<div class="mermaid">${escHtml(codeLines.join('\n'))}</div></div>`
-        ));
-      } else {
-        const cls  = lang ? ` class="language-${escHtml(lang)}"` : '';
-        const head = `<div class="code-block-head">` +
-          `<span class="code-lang-label">${lang ? escHtml(lang) : '&nbsp;'}</span>` +
-          `<button class="copy-btn" onclick="copyCode(this)">コピー</button></div>`;
-        out.push(protect(
-          `<div class="code-block">${head}<pre><code${cls}>${escHtml(codeLines.join('\n'))}</code></pre></div>`
-        ));
-      }
+      out.push(protect(renderFencedCode(lang, codeLines)));
       continue;
     }
 
@@ -811,10 +862,36 @@ function parseMarkdown(md, cbCounter) {
     /* リスト */
     if(/^[ \t]*(?:[-*+]|\d+\.)\s/.test(line)){
       const listLines=[];
-      while(i < lines.length &&
-        (/^[ \t]*(?:[-*+]|\d+\.)\s/.test(lines[i]) || /^[ \t]{2,}\S/.test(lines[i]))
-      ){
-        listLines.push(lines[i]); i++;
+      let inFence = false;
+      while(i < lines.length){
+        const l = lines[i];
+        if(inFence){
+          listLines.push(l); i++;
+          if(/^[ \t]*```/.test(l)) inFence = false;
+          continue;
+        }
+        if(/^[ \t]*```/.test(l)){
+          inFence = true;
+          listLines.push(l); i++;
+          continue;
+        }
+        if(/^[ \t]*(?:[-*+]|\d+\.)\s/.test(l) || /^[ \t]{2,}\S/.test(l)){
+          listLines.push(l); i++;
+          continue;
+        }
+        if(l.trim()===''){
+          let k = i+1;
+          while(k < lines.length && lines[k].trim()==='') k++;
+          if(k < lines.length && (
+            /^[ \t]*(?:[-*+]|\d+\.)\s/.test(lines[k]) ||
+            /^[ \t]{2,}\S/.test(lines[k]) ||
+            /^[ \t]*```/.test(lines[k])
+          )){
+            while(i < k){ listLines.push(lines[i]); i++; }
+            continue;
+          }
+        }
+        break;
       }
       out.push(parseListBlock(listLines, cbCounter));
       continue;
