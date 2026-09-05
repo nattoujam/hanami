@@ -18,6 +18,10 @@ Markdown・CSV ファイルをブラウザで表示するビューア。
 
 `index.html` をブラウザで開くだけで動作します。
 
+## デスクトップ版
+
+Tauri v2 製のデスクトップアプリ -> [`desktop/`](desktop/) 
+
 ## ライセンス
 
 [MIT](LICENSE)
