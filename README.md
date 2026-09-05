@@ -22,6 +22,10 @@ Markdown・CSV ファイルをブラウザで表示するビューア。
 
 Tauri v2 製のデスクトップアプリ -> [`desktop/`](desktop/) 
 
+## ドキュメント
+
+- [開発](docs/development.md) — レンダリング回帰テストの回し方
+
 ## ライセンス
 
 [MIT](LICENSE)

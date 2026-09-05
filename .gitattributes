@@ -1,0 +1,2 @@
+# CRLF 改行を含む行がテストケースのため、正規化を無効にする
+tests/fixtures/sample.csv -text

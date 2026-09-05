@@ -1,0 +1,15 @@
+{
+  "name": "hanami",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Markdown・CSV ファイルをブラウザで表示するビューア",
+  "license": "MIT",
+  "scripts": {
+    "test": "docker run --rm --ipc=host --user $(id -u):$(id -g) -e HOME=/tmp -e CI=1 -v \"$PWD\":/work -w /work mcr.microsoft.com/playwright:v1.63.0-noble npx playwright test",
+    "test:update": "docker run --rm --ipc=host --user $(id -u):$(id -g) -e HOME=/tmp -e CI=1 -v \"$PWD\":/work -w /work mcr.microsoft.com/playwright:v1.63.0-noble npx playwright test --update-snapshots",
+    "test:dom": "playwright test --grep @dom"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

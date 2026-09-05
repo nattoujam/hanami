@@ -1,0 +1,23 @@
+
+<div class="csv-wrap">
+  <div class="csv-meta">
+    <span>📊 <strong>sample.csv</strong></span>
+    <span>列: <strong>5</strong></span>
+    <span>行: <strong>8</strong></span>
+  </div>
+  <div class="csv-box">
+    <div class="csv-toolbar">
+      <label for="csvSearch">🔍 検索:</label>
+      <input id="csvSearch" class="csv-search-input" type="text" placeholder="キーワードを入力…" oninput="filterCSV(this.value)">
+      <span class="csv-count" id="csvCount">8 件</span>
+    </div>
+    <div class="csv-scroll">
+      <table class="csv-table" id="csvTable">
+        <thead><tr><th class="csv-row-num">#</th><th title="id">id</th><th title="項目">項目</th><th title="値">値</th><th title="備考">備考</th><th title="数値">数値</th></tr></thead>
+        <tbody id="csvBody"><tr data-row="0"><td class="csv-row-num">1</td><td title="1">1</td><td title="カンマ入り">カンマ入り</td><td title="カンマ, を含む値">カンマ, を含む値</td><td title="クォートで囲む">クォートで囲む</td><td title="1200">1200</td></tr><tr data-row="1"><td class="csv-row-num">2</td><td title="2">2</td><td title="引用符入り">引用符入り</td><td title="&quot;引用符&quot; を含む値">&quot;引用符&quot; を含む値</td><td title="二重引用符でエスケープ">二重引用符でエスケープ</td><td title="980">980</td></tr><tr data-row="2"><td class="csv-row-num">3</td><td title="3">3</td><td title="空セル">空セル</td><td title=""></td><td title=""></td><td title="0">0</td></tr><tr data-row="3"><td class="csv-row-num">4</td><td title="4">4</td><td title="ASCII のみ">ASCII のみ</td><td title="plain ascii value">plain ascii value</td><td title="no multibyte">no multibyte</td><td title="45678">45678</td></tr><tr data-row="4"><td class="csv-row-num">5</td><td title="5">5</td><td title="改行入り">改行入り</td><td title="1行目
+2行目">1行目
+2行目</td><td title="クォート内の改行">クォート内の改行</td><td title="300">300</td></tr><tr data-row="5"><td class="csv-row-num">6</td><td title="6">6</td><td title="CRLF 改行">CRLF 改行</td><td title="行末が CRLF">行末が CRLF</td><td title=""></td><td title="150">150</td></tr><tr data-row="6"><td class="csv-row-num">7</td><td title="7">7</td><td title="セルが3つの行">セルが3つの行</td><td title="ヘッダーより少ない">ヘッダーより少ない</td><td title=""></td><td title=""></td></tr><tr data-row="7"><td class="csv-row-num">8</td><td title="8">8</td><td title="セルが6つの行">セルが6つの行</td><td title="ヘッダーより多い">ヘッダーより多い</td><td title="余分な列は捨てられる">余分な列は捨てられる</td><td title="999">999</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>

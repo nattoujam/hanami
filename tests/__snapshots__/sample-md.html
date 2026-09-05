@@ -1,0 +1,85 @@
+<h1 id="見出し-1">見出し 1</h1>
+
+<p>インライン記法: <strong>太字</strong>、<em>イタリック</em>、<strong><em>太字イタリック</em></strong>、<del>取り消し線</del>、<code>インラインコード</code></p>
+
+<p>アンダースコア記法: <strong>太字</strong>、<em>イタリック</em>、<strong><em>太字イタリック</em></strong></p>
+
+<p>単語内アンダースコア: snake_case_a snake_case_b</p>
+
+<p>カギ括弧で囲んだインラインコード: 「<code>コード</code>」</p>
+
+<p>同一行に複数のインラインコード: <code>A</code> / <code>B</code> / <code>C</code></p>
+
+<p>二重バッククォート: <code> `バッククォート` を含むコード </code></p>
+
+<p>リンク: <a href="https://example.com" target="_blank" rel="noopener">ラベル</a>、自動リンク: <a href="https://example.com/auto" target="_blank" rel="noopener">https://example.com/auto</a></p>
+
+<p>画像: <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iODAiPjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iODAiIGZpbGw9IiNmOWE4ZDQiLz48dGV4dCB4PSI4MCIgeT0iNDYiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjM2IwNzY0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5pbWFnZTwvdGV4dD48L3N2Zz4=" alt="代替テキスト" loading="lazy"></p>
+
+<p>HTML エスケープ: <code>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</code> & <code>a &gt; b</code></p>
+
+<p>行末2スペースによる強制改行<br> 2行目</p>
+
+<p>行末バックスラッシュによる強制改行<br> 2行目</p>
+
+<h2 id="見出し-2">見出し 2</h2>
+
+<h3 id="見出し-3">見出し 3</h3>
+
+<h4 id="見出し-4">見出し 4</h4>
+
+<h5 id="見出し-5">見出し 5</h5>
+
+<h6 id="見出し-6">見出し 6</h6>
+
+<h3 id="末尾に--を付けた見出し">末尾に # を付けた見出し</h3>
+
+<h2 id="水平線">水平線</h2>
+
+<hr>
+
+<hr>
+
+<hr>
+
+<h2 id="引用">引用</h2>
+
+<blockquote><p>引用の1行目 <strong>太字</strong>を含む2行目</p>
+
+<ul><li>引用内の箇条書き</li><li>2つ目<div class="code-block"><div class="code-block-head"><span class="code-lang-label">js</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div><pre><code class="language-js">const inQuote = true;</code></pre></div></li></ul>
+</blockquote>
+<h2 id="リスト">リスト</h2>
+
+<ul><li>箇条書き 1</li><li>箇条書き 2<ul><li>ネスト 2-1<ul><li>ネスト 2-1-1</li></ul></li></ul></li><li>箇条書き 3</li></ul><ol><li>番号付き 1</li><li>番号付き 2<ol><li>ネスト 2-1</li><li>ネスト 2-2</li></ol></li><li>番号付き 3</li></ol><ul><li>項目の1行目<ul><li>  インデントした継続行</li><li>  さらに継続行</li></ul></li></ul>
+
+<h3 id="リスト内のコードブロック">リスト内のコードブロック</h3>
+
+<ul><li>手順 1<div class="code-block"><div class="code-block-head"><span class="code-lang-label">sh</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div><pre><code class="language-sh">npm ci</code></pre></div></li><li>手順 2</li></ul>
+
+<h3 id="タスクリスト">タスクリスト</h3>
+
+<ul><li><input type="checkbox" data-cb-index="0"> 未チェック</li><li><input type="checkbox" checked data-cb-index="1"> チェック済み<ul><li><input type="checkbox" data-cb-index="2"> ネストした未チェック</li></ul></li><li><input type="checkbox" data-cb-index="3"> <code>コード</code>と<strong>太字</strong>を含む項目</li></ul>
+
+<h2 id="テーブル">テーブル</h2>
+
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">左寄せ</th><th style="text-align:center">中央寄せ</th><th style="text-align:right">右寄せ</th><th>指定なし</th></tr></thead><tbody><tr><td style="text-align:left">a</td><td style="text-align:center">b</td><td style="text-align:right">1,234</td><td>あいうえお</td></tr><tr><td style="text-align:left"><strong>太字</strong></td><td style="text-align:center"><code>コード</code></td><td style="text-align:right">42</td><td><a href="https://example.com" target="_blank" rel="noopener">リンク</a></td></tr><tr><td style="text-align:left">セルが3つの行</td><td style="text-align:center">2</td><td style="text-align:right">3</td><td></td></tr><tr><td style="text-align:left">セルが5つの行</td><td style="text-align:center">2</td><td style="text-align:right">3</td><td>4</td></tr></tbody></table></div>
+
+<h2 id="コードブロック">コードブロック</h2>
+
+<div class="code-block"><div class="code-block-head"><span class="code-lang-label">js</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div><pre><code class="language-js">function greet(name) {
+  return `Hello, ${name}!`;
+}</code></pre></div>
+
+<div class="code-block"><div class="code-block-head"><span class="code-lang-label">&nbsp;</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div><pre><code>プレーンテキスト
+  インデントも保持される</code></pre></div>
+
+<div class="code-block"><div class="code-block-head"><span class="code-lang-label">html</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div><pre><code class="language-html">&lt;div class=&quot;a&quot; data-x=&quot;1&quot;&gt;&amp;amp; &lt; &gt;&lt;/div&gt;</code></pre></div>
+
+<h2 id="mermaid">Mermaid</h2>
+
+<div class="mermaid-block"><div class="mermaid-block-head"><span class="code-lang-label">mermaid</span><span class="mermaid-zoom-scale">100%</span><div class="mermaid-zoom-btns"><button class="mz-out" title="縮小">－</button><button class="mz-reset" title="リセット">⟳</button><button class="mz-in" title="拡大">＋</button></div></div><div class="mermaid">flowchart TD
+  A[ファイルを開く] --&gt; B{拡張子は?}
+  B --&gt;|md| C[parseMarkdown]
+  B --&gt;|csv| D[parseCSV]
+  C --&gt; E[描画]
+  D --&gt; E</div></div>
