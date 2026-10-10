@@ -742,7 +742,17 @@ function parseListBlock(lines, cbCounter) {
         html += `<${type}>`;
       }
 
-      let content = getContent(item);
+      // 継続行(マーカーのないインデント行)は項目のテキストとして改行して連結する
+      let j = i+1;
+      const textLines = [getContent(item)];
+      while(j < items.length && items[j].trim()!=='' && getIndent(items[j]) > indent &&
+            !/^[ \t]*(?:[-*+]|\d+\.)\s/.test(items[j]) && !/^[ \t]*```/.test(items[j])){
+        textLines.push(items[j].replace(/^[ \t]+/,''));
+        j++;
+      }
+      let content = textLines
+        .map((l, k) => k < textLines.length-1 ? l.replace(/(?: {2,}|\\)$/,'') : l)
+        .join('<br>');
       const cb = content.match(/^\[([ xX])\]\s*(.*)/);
       if(cb){
         const checked = cb[1].trim() ? ' checked' : '';
@@ -754,7 +764,6 @@ function parseListBlock(lines, cbCounter) {
 
       // 子アイテム収集(空行を挟んでも子インデントが続く場合は含める)
       const children=[];
-      let j = i+1;
       while(j < items.length){
         if(items[j].trim()===''){
           let k = j+1;
