@@ -12,7 +12,13 @@ function readFixture(name) {
   return fs.readFileSync(path.join(FIXTURES, name), 'utf8');
 }
 
+// index.html の script の URL と一致しないと route が効かず CDN へ取りに行くため、URL と devDependencies の mermaid は index.html とバージョンを揃える。
+const MERMAID_URL = 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js';
+const MERMAID_FILE = require.resolve('mermaid/dist/mermaid.min.js');
+
 async function openApp(page) {
+  // ネットワークなしのコンテナでも実行できるようにするため、CDN へは行かずローカルのファイルを返す
+  await page.route(MERMAID_URL, route => route.fulfill({ path: MERMAID_FILE }));
   await page.clock.setFixedTime(FIXED_TIME);
   await page.goto(INDEX_URL);
   // トーストは 2.2 秒後に自動で消えるため、消えるのを待つとスクリーンショットが実行時間に左右される
