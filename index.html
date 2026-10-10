@@ -742,7 +742,7 @@ function parseListBlock(lines, cbCounter) {
         html += `<${type}>`;
       }
 
-      // 継続行(マーカーのないインデント行)は項目のテキストとして連結する
+      // 継続行(マーカーのないインデント行)は項目のテキストとして改行して連結する
       let j = i+1;
       const textLines = [getContent(item)];
       while(j < items.length && items[j].trim()!=='' && getIndent(items[j]) > indent &&
@@ -750,8 +750,9 @@ function parseListBlock(lines, cbCounter) {
         textLines.push(items[j].replace(/^[ \t]+/,''));
         j++;
       }
-      let content = textLines.join('\n')
-        .replace(/  \n/g,'<br>\n').replace(/\\\n/g,'<br>\n').replace(/\n/g,' ');
+      let content = textLines
+        .map((l, k) => k < textLines.length-1 ? l.replace(/(?: {2,}|\\)$/,'') : l)
+        .join('<br>');
       const cb = content.match(/^\[([ xX])\]\s*(.*)/);
       if(cb){
         const checked = cb[1].trim() ? ' checked' : '';
