@@ -245,6 +245,7 @@ header {
   padding: 2px 8px; border-radius: 6px;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
+.file-bar-dims { font-size: 0.8rem; color: var(--secondary); }
 .file-bar-size { font-size: 0.72rem; color: #a855f7; opacity: 0.8; margin-left: auto; }
 
 /* ── Markdown body ── */
@@ -271,7 +272,8 @@ header {
   border: none;
   margin-bottom: 2px;
 }
-.content.wide .md-body {
+.content.wide .md-body,
+.content.wide .csv-box {
   max-width: none;
   border-radius: 0;
   border: none;
@@ -391,15 +393,6 @@ header {
 
 /* ── CSV viewer ── */
 .csv-wrap { max-width: 100%; }
-
-.csv-meta {
-  background: linear-gradient(135deg, #fce7f3, #ede9fe);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px 18px;
-  margin-bottom: 14px; font-size: 0.8rem; color: var(--secondary);
-  display: flex; gap: 18px; flex-wrap: wrap;
-}
-.csv-meta span { display: flex; align-items: center; gap: 5px; }
 
 .csv-box {
   background: var(--surface);
@@ -982,7 +975,7 @@ function parseCSV(text) {
   return rows;
 }
 
-function renderCSV(rows, filename) {
+function renderCSV(rows) {
   if(rows.length===0) return '<p>データがありません。</p>';
 
   const headers = rows[0];
@@ -1001,11 +994,6 @@ function renderCSV(rows, filename) {
 
   return `
 <div class="csv-wrap">
-  <div class="csv-meta">
-    <span>📊 <strong>${escHtml(filename)}</strong></span>
-    <span>列: <strong>${headers.length}</strong></span>
-    <span>行: <strong>${data.length}</strong></span>
-  </div>
   <div class="csv-box">
     <div class="csv-toolbar">
       <label for="csvSearch">🔍 検索:</label>
@@ -1304,18 +1292,22 @@ function handleFile(file, isRefresh=false){
 
     const icon = type==='csv' ? '📊' : '📄';
     const typeLabel = type==='csv' ? 'CSV' : 'Markdown';
+    const rows = type==='csv' ? parseCSV(text) : null;
+    const dims = rows && rows.length > 0
+      ? `<span class="file-bar-dims">列: <strong>${rows[0].length}</strong>　行: <strong>${rows.length-1}</strong></span>`
+      : '';
     const fileBar = `
       <div class="file-bar">
         <span class="file-bar-icon">${icon}</span>
         <span class="file-bar-name">${escHtml(file.name)}</span>
         <span class="file-bar-type">${typeLabel}</span>
+        ${dims}
         <span class="file-bar-size">${size}</span>
       </div>`;
 
     if(type==='csv'){
       currentFileText = null;
-      const rows = parseCSV(text);
-      content.innerHTML = fileBar + renderCSV(rows, file.name);
+      content.innerHTML = fileBar + renderCSV(rows);
     } else {
       currentFileText = text;
       const html = parseMarkdown(text);
