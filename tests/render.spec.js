@@ -65,10 +65,7 @@ test.describe('@dom 出力HTML', () => {
 
   test('renderCSV', async ({ page }) => {
     await openApp(page);
-    const html = await page.evaluate(
-      ([src, name]) => renderCSV(parseCSV(src), name),
-      [readFixture('sample.csv'), 'sample.csv']
-    );
+    const html = await page.evaluate(src => renderCSV(parseCSV(src)), readFixture('sample.csv'));
     expect(html).toMatchSnapshot('sample.csv.html');
   });
 });
