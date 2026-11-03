@@ -41,7 +41,7 @@
     list.innerHTML = state.history.map(function (it) {
       return '<div class="h-item' + (state.path === it.path ? ' active' : '') + '"' +
         ' data-path="' + esc(it.path) + '" onclick="openFromHistory(this.dataset.path)">' +
-        '<span class="h-icon">' + (it.type === 'csv' ? '📊' : '📄') + '</span>' +
+        '<span class="h-icon">' + window.fileIcon(it.type) + '</span>' +
         '<div class="h-info">' +
           '<div class="h-name" title="' + esc(it.path) + '">' + esc(it.name) + '</div>' +
           '<div class="h-date">' + esc(it.date || '') + '</div>' +
@@ -110,7 +110,7 @@
           '<div class="welcome" id="welcome">' +
           '<div class="welcome-emoji">🌸</div>' +
           '<div class="welcome-title">Hanami</div>' +
-          '<div class="welcome-sub">📄 Markdown / 📊 CSV ファイルを美しく表示します</div>' +
+          '<div class="welcome-sub">📄 Markdown / 📊 CSV / 🧩 JSON ファイルを美しく表示します</div>' +
           '</div>';
       }
       renderHistory();

@@ -273,7 +273,8 @@ header {
   margin-bottom: 2px;
 }
 .content.wide .md-body,
-.content.wide .csv-box {
+.content.wide .csv-box,
+.content.wide .json-box {
   max-width: none;
   border-radius: 0;
   border: none;
@@ -390,6 +391,46 @@ header {
 .md-body td { padding: 8px 16px; border-top: 1px solid var(--border); font-size: 0.875rem; }
 .md-body tr:nth-child(even) td { background: #fdf4ff; }
 .md-body tr:hover td { background: #f5f3ff; }
+
+/* ── JSON viewer ── */
+.json-box {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 4px 28px var(--shadow);
+}
+.json-toolbar {
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #fdf4ff, #fce7f3);
+  border-bottom: 2px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.json-toolbar button {
+  font-size: 0.78rem; font-weight: 600; color: var(--secondary);
+  background: #fff; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 4px 12px; cursor: pointer;
+}
+.json-toolbar button:hover { border-color: var(--secondary); }
+.json-tree, .json-raw {
+  margin: 0; padding: 16px 20px; overflow: auto;
+  max-height: calc(100vh - 310px);
+  font-family: 'Cascadia Code','Fira Code','Consolas','Monaco',monospace;
+  font-size: 0.85rem; line-height: 1.7;
+}
+.json-raw { white-space: pre-wrap; word-break: break-all; }
+.json-tree details > details,
+.json-tree details > .json-row { margin-left: 1.4em; }
+.json-tree summary { cursor: pointer; }
+.json-tree summary:hover { background: #fdf4ff; }
+.json-key { color: #7c3aed; }
+.json-str { color: #be185d; word-break: break-all; }
+.json-num { color: #0369a1; }
+.json-bool, .json-null { color: #b45309; font-weight: 700; }
+.json-meta { color: #a855f7; font-size: 0.75em; margin-left: 0.6em; }
+.json-error {
+  padding: 12px 20px; color: #be123c; background: #fff1f2;
+  border-bottom: 2px solid var(--border); font-size: 0.85rem;
+}
 
 /* ── CSV viewer ── */
 .csv-wrap { max-width: 100%; }
@@ -569,7 +610,7 @@ footer a:hover { opacity: 1; }
   <button class="refresh-btn" id="refreshBtn" onclick="refreshFile()" disabled title="ファイルを最新状態に更新">
     <span class="r-icon">🔄</span> 更新
   </button>
-  <input type="file" id="fileInput" accept=".md,.markdown,.csv,.txt" style="display:none">
+  <input type="file" id="fileInput" accept=".md,.markdown,.csv,.json,.txt" style="display:none">
 </header>
 
 <div class="layout">
@@ -590,7 +631,7 @@ footer a:hover { opacity: 1; }
       <div class="welcome-emoji">🌸</div>
       <div class="welcome-title">Hanami</div>
       <div class="welcome-sub">
-        📄 Markdown (.md) &nbsp;/&nbsp; 📊 CSV ファイルを<br>美しく表示します
+        📄 Markdown (.md) &nbsp;/&nbsp; 📊 CSV &nbsp;/&nbsp; 🧩 JSON ファイルを<br>美しく表示します
       </div>
       <div class="welcome-hint">
         <strong>📂 ファイルを開く</strong> ボタンをクリック<br>または、ここにファイルをドロップ
@@ -1010,6 +1051,60 @@ function renderCSV(rows) {
 </div>`;
 }
 
+/* ═══════════════════════════════════════
+   JSON Viewer
+═══════════════════════════════════════ */
+
+const JSON_OPEN_DEPTH = 2;
+
+function jsonScalar(v) {
+  if(v===null) return '<span class="json-null">null</span>';
+  if(typeof v==='string') return `<span class="json-str">${escHtml(JSON.stringify(v))}</span>`;
+  if(typeof v==='number') return `<span class="json-num">${v}</span>`;
+  return `<span class="json-bool">${v}</span>`;
+}
+
+function jsonNode(v, key, depth, last) {
+  const label = key===null ? '' : `<span class="json-key">${escHtml(JSON.stringify(key))}</span>: `;
+  const comma = last ? '' : ',';
+  if(v===null || typeof v!=='object') {
+    return `<div class="json-row">${label}${jsonScalar(v)}${comma}</div>`;
+  }
+  const isArr = Array.isArray(v);
+  const entries = isArr ? v.map((x,i)=>[i,x]) : Object.entries(v);
+  const [open,close] = isArr ? ['[',']'] : ['{','}'];
+  if(entries.length===0) return `<div class="json-row">${label}${open}${close}${comma}</div>`;
+  const meta = `${entries.length} ${isArr ? '件' : 'キー'}`;
+  const children = entries.map(([k,x],i)=>jsonNode(x, isArr?null:k, depth+1, i===entries.length-1)).join('');
+  return `<details${depth<JSON_OPEN_DEPTH?' open':''}><summary>${label}${open}<span class="json-meta">${meta}</span></summary>${children}<div>${close}${comma}</div></details>`;
+}
+
+function renderJSON(text) {
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  let value;
+  try {
+    value = JSON.parse(text);
+  } catch(e) {
+    return `
+<div class="json-box">
+  <div class="json-error">⚠️ JSON として解釈できません: ${escHtml(e.message)}</div>
+  <pre class="json-raw">${escHtml(text)}</pre>
+</div>`;
+  }
+  return `
+<div class="json-box">
+  <div class="json-toolbar">
+    <button type="button" onclick="setJSONOpen(true)">全て展開</button>
+    <button type="button" onclick="setJSONOpen(false)">全て折りたたむ</button>
+  </div>
+  <div class="json-tree" id="jsonTree">${jsonNode(value, null, 0, true)}</div>
+</div>`;
+}
+
+function setJSONOpen(open) {
+  document.querySelectorAll('#jsonTree details').forEach(d=>{ d.open = open; });
+}
+
 function filterCSV(query) {
   const tbody = document.getElementById('csvBody');
   const count = document.getElementById('csvCount');
@@ -1143,7 +1238,7 @@ function renderHistory(){
     <div class="h-item${currentFile===item.name?' active':''}"
          data-name="${escHtml(item.name)}"
          onclick="openFromHistory(this.dataset.name)">
-      <span class="h-icon">${item.type==='csv'?'📊':'📄'}</span>
+      <span class="h-icon">${fileIcon(item.type)}</span>
       <div class="h-info">
         <div class="h-name" title="${escHtml(item.name)}">${escHtml(item.name)}</div>
         <div class="h-date">${item.date}</div>
@@ -1162,7 +1257,7 @@ function deleteHistoryItem(name){
     document.getElementById('content').innerHTML='<div class="welcome" id="welcome">'
       +'<div class="welcome-emoji">🌸</div>'
       +'<div class="welcome-title">Hanami</div>'
-      +'<div class="welcome-sub">📄 Markdown / 📊 CSV ファイルを美しく表示します</div>'
+      +'<div class="welcome-sub">📄 Markdown / 📊 CSV / 🧩 JSON ファイルを美しく表示します</div>'
       +'</div>';
   }
   renderHistory();
@@ -1198,7 +1293,7 @@ async function _openFromHistoryAsync(name){
   showToast(`📂 「${name}」を選択してください`);
   try{
     const [h] = await window.showOpenFilePicker({
-      types:[{description:'テキストファイル', accept:{'text/*':['.md','.markdown','.csv','.txt']}}],
+      types:[{description:'テキストファイル', accept:{'text/*':['.md','.markdown','.csv','.json','.txt']}}],
       multiple:false
     });
     currentFileHandle = h;
@@ -1217,7 +1312,7 @@ async function triggerOpen(){
     try{
       const [handle] = await window.showOpenFilePicker({
         types:[{ description:'テキストファイル',
-                 accept:{'text/*':['.md','.markdown','.csv','.txt']} }],
+                 accept:{'text/*':['.md','.markdown','.csv','.json','.txt']} }],
         multiple: false
       });
       currentFileHandle = handle;
@@ -1266,9 +1361,19 @@ async function refreshFile(){
   }
 }
 
+const FILE_TYPES = {
+  md:   { icon:'📄', label:'Markdown' },
+  csv:  { icon:'📊', label:'CSV' },
+  json: { icon:'🧩', label:'JSON' },
+};
+
+function fileIcon(type){
+  return (FILE_TYPES[type] || FILE_TYPES.md).icon;
+}
+
 function handleFile(file, isRefresh=false){
   const ext = file.name.split('.').pop().toLowerCase();
-  const type = (ext==='csv') ? 'csv' : 'md';
+  const type = (ext==='csv' || ext==='json') ? ext : 'md';
   const reader = new FileReader();
 
   const content = document.getElementById('content');
@@ -1290,8 +1395,8 @@ function handleFile(file, isRefresh=false){
     saveToHistory({ name: file.name, type, date, size });
     renderHistory();
 
-    const icon = type==='csv' ? '📊' : '📄';
-    const typeLabel = type==='csv' ? 'CSV' : 'Markdown';
+    const icon = fileIcon(type);
+    const typeLabel = FILE_TYPES[type].label;
     const rows = type==='csv' ? parseCSV(text) : null;
     const dims = rows && rows.length > 0
       ? `<span class="file-bar-dims">列: <strong>${rows[0].length}</strong>　行: <strong>${rows.length-1}</strong></span>`
@@ -1308,6 +1413,9 @@ function handleFile(file, isRefresh=false){
     if(type==='csv'){
       currentFileText = null;
       content.innerHTML = fileBar + renderCSV(rows);
+    } else if(type==='json'){
+      currentFileText = null;
+      content.innerHTML = fileBar + renderJSON(text);
     } else {
       currentFileText = text;
       const html = parseMarkdown(text);
