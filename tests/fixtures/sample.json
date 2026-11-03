@@ -1,0 +1,11 @@
+{
+  "name": "hanami",
+  "version": 1.5,
+  "private": true,
+  "description": null,
+  "tags": ["markdown", "csv", "json"],
+  "escape": "引用符 \" と <tag> & 改行\n",
+  "author": { "name": "桜", "links": [] },
+  "scripts": {},
+  "nested": { "a": { "b": { "c": [1, 2, { "d": false }] } } }
+}

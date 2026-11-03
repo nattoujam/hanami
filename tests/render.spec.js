@@ -68,6 +68,19 @@ test.describe('@dom 出力HTML', () => {
     const html = await page.evaluate(src => renderCSV(parseCSV(src)), readFixture('sample.csv'));
     expect(html).toMatchSnapshot('sample.csv.html');
   });
+
+  test('renderJSON', async ({ page }) => {
+    await openApp(page);
+    const html = await page.evaluate(src => renderJSON(src), readFixture('sample.json'));
+    expect(html).toMatchSnapshot('sample.json.html');
+  });
+
+  test('renderJSON（不正な JSON）', async ({ page }) => {
+    await openApp(page);
+    const html = await page.evaluate(() => renderJSON('{"a": <b>}'));
+    expect(html).toContain('json-error');
+    expect(html).toContain('&lt;b&gt;');
+  });
 });
 
 /* ── ビジュアル回帰: ベースラインは必ず npm run test:update（Docker）で生成する ── */

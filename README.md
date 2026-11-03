@@ -1,6 +1,6 @@
 # 🌸 Hanami
 
-Markdown・CSV ファイルをブラウザで表示するビューア。
+Markdown・CSV・JSON ファイルをブラウザで表示するビューア。
 
 **→ [リンク](https://nattoujam.github.io/hanami/)**
 
@@ -8,6 +8,7 @@ Markdown・CSV ファイルをブラウザで表示するビューア。
 
 - Markdown レンダリング（GFM サブセット、Mermaid 図対応）
 - CSV テーブル表示（インクリメンタル検索付き）
+- JSON ツリー表示（折りたたみ可。不正な JSON はエラーと原文を表示）
 - ファイル履歴・ドラッグ＆ドロップ・更新ボタン
 
 ## 依存関係

@@ -88,7 +88,7 @@ fn pick_file(app: tauri::AppHandle) {
     let handle = app.clone();
     app.dialog()
         .file()
-        .add_filter("テキストファイル", &["md", "markdown", "csv", "txt"])
+        .add_filter("テキストファイル", &["md", "markdown", "csv", "json", "txt"])
         .pick_file(move |picked| {
             if let Some(path) = picked {
                 let _ = handle.emit("hanami://open", path.to_string());
