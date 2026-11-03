@@ -115,6 +115,19 @@ test.describe('@visual 描画', () => {
   });
 });
 
+test.describe('@visual JSON', () => {
+  test('JSON', async ({ page }) => {
+    await openFixture(page, 'sample.json');
+    await screenshotContent(page, 'sample.json.png');
+  });
+
+  test('JSON（ワイド表示）', async ({ page }) => {
+    await openFixture(page, 'sample.json');
+    await page.evaluate(() => toggleWidth());
+    await screenshotContent(page, 'sample.json-wide.png');
+  });
+});
+
 test.describe('@visual レイアウト', () => {
   test('ヘッダー・サイドバー・フッター', async ({ page }) => {
     await openFixture(page, 'sample.md');
